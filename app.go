@@ -1,4 +1,4 @@
-package contentService
+package ContentService
 
 import (
   "github.com/gorilla/mux"
