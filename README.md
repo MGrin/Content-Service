@@ -8,17 +8,17 @@ Works with MongoDB backend and users logged in you server using mngo-sessions (y
 package main
 
 import (
-  "github.com/MGrin/contentService"
+  "github.com/MGrin/ContentService"
 )
 
 const (
-  PORT = 7896 // Port to bind this application
-  DB = "mongodb://localhost:27017" // MongoDB URL
-  DB_NAME = "Eventorio-dev" // MongoDB Database name
-  ORIG_PATH = "./pictures" // the root folder to store pictures
+  PORT = 7896
+  DB = "mongodb://localhost:27017"
+  DB_NAME = "Eventorio-dev"
+  ORIG_PATH = "./pictures"
 )
 func main() {
-  var service, err = contentService.Create(ORIG_PATH, DB, DB_NAME)
+  var service, err = ContentService.Create(ORIG_PATH, DB, DB_NAME)
   if err != nil {
     panic(err)
   }
