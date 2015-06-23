@@ -2,8 +2,6 @@ package ContentService
 
 import (
   "github.com/gorilla/mux"
-  "gopkg.in/mgo.v2"
-  "gopkg.in/mgo.v2/bson"
 
   "net/http"
   "mime/multipart"
@@ -15,29 +13,15 @@ import (
   "path"
 )
 
-var (
-  PORT int
-  DB string
-  DB_NAME string
-  ORIG_PATH string
-)
-
 type ContentService struct {
   r *mux.Router
-  mongoSession *mgo.Session
-  mongo *mgo.Database
+  mongo *MongoDBBackend
 }
 
-// MongoDB Session that holds the information about logged in users
-type Session struct {
-  Id bson.ObjectId "_id,omitempty"
-  Session string "session,omitempty"
-}
+var ORIG_PATH string
 
 func Create(originalsPath string, mongoURL string, mongoDBName string) (service *ContentService, err error){
   ORIG_PATH = originalsPath
-  DB_NAME = mongoDBName
-  DB = mongoURL
 
   // Create folder for pictures
   err = os.MkdirAll(path.Join(ORIG_PATH), 0777)
@@ -54,24 +38,20 @@ func Create(originalsPath string, mongoURL string, mongoDBName string) (service 
   }
 
   service.r.HandleFunc("/{itemId}/{pictureType}", service.HandleUploadPicture).Methods("POST")
+  service.r.HandleFunc("/{itemId}/{pictureType}/{pictureName}", service.HandlDeletePicture).Methods("DELETE")
+  service.r.HandleFunc("/{itemId}/{pictureType}/{pictureName}", service.HandlePictureConfirmation).Methods("PUT")
+
   service.r.PathPrefix("/").Handler(http.FileServer(http.Dir(ORIG_PATH))).Methods("GET")
+
+  service.mongo, err = CreateMongoBackend(mongoURL, mongoDBName)
 
   return service, err
 }
 
 func (service *ContentService) Start(port int) error{
-  PORT = port
-  
-  var err error
-  service.mongoSession, err = mgo.Dial(DB)
-  if err != nil {
-    return err
-  }
-  service.mongo = service.mongoSession.DB(DB_NAME)
-
   http.Handle("/", service.r)
-  fmt.Printf("Pictures Server running on port %d\n", PORT)
-  http.ListenAndServe(fmt.Sprintf(":%d", PORT), nil)
+  fmt.Printf("Pictures Server running on port %d\n", port)
+  http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 
   return nil
 }
@@ -83,15 +63,33 @@ func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *
   itemId := vars["itemId"]
   pictureType := vars["pictureType"]
 
+  if !service.Supports(pictureType) {
+    HandleError(404, errors.New("Not found"), rw)
+    return
+  }
+
   err = service.Authorize(req)
   if err != nil {
     HandleError(403, err, rw)
     return
   }
 
+  var itemType string
+  var picturePath string
+
+  itemType, err = service.mongo.GetItemType(itemId)
+  if err != nil {
+    HandleError(500, err, rw)
+  }
+
+  fmt.Println(itemType)
+  if itemType == TEMP_TYPE{
+    itemId = "temp"
+  }
+
   err = os.MkdirAll(path.Join(ORIG_PATH, itemId), 0777)
   if err != nil {
-    HandleError(403, err, rw)
+    HandleError(500, err, rw)
     return
   }
 
@@ -118,6 +116,40 @@ func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *
   rw.Write([]byte(filename))
 }
 
+func HandlDeletePicture(rw http.ResponseWriter, req *http.Request) {
+  var err error
+
+  vars := mux.Vars(req)
+  itemId := vars["itemId"]
+  pictureType := vars["pictureType"]
+  pictureName := vars["pictureName"]
+
+  err = service.RemovePicture(itemId, pictureType, pictureName)
+  if err != nil {
+    HandleError(500, err, rw)
+    return
+  }
+
+  rw.WriteHeader(200)
+}
+
+func HandlePictureConfirmation(rw http.ResponseWriter, req *http.Request) {
+  var err error
+
+  vars := mux.Vars(req)
+  itemId := vars["itemId"]
+  pictureType := vars["pictureType"]
+  pictureName := vars["pictureName"]
+
+  err = service.ConfirmPicture(itemId, pictureType, pictureName)
+  if err != nil {
+    HandleError(500, err, rw)
+    return
+  }
+
+  rw.WriteHeader(200)
+}
+
 func HandleError(code int, err error, rw http.ResponseWriter) {
   rw.WriteHeader(code)
   rw.Write([]byte(err.Error()))
@@ -136,9 +168,9 @@ func (service *ContentService) Authorize(req *http.Request) error {
   sessionId = sessionId[4:len(sessionId)]
 
   c := service.mongo.C("sessions")
-  sessionStruct := &Session{}
+  var sessionStruct *SessionModel
 
-  err = c.Find(bson.M{"_id" : sessionId}).One(sessionStruct)
+  sessionStruct, err = service.mongo.FindSessionById(sessionId)
   if err != nil {
     return err
   }
@@ -150,12 +182,10 @@ func (service *ContentService) Authorize(req *http.Request) error {
     return err
   }
 
-  userId := bson.ObjectIdHex(session["passport"]["user"].(string))
-
-  c = service.mongo.C("users")
-
+  userId := session["passport"]["user"].(string)
   var count int
-  count, err = c.FindId(userId).Count()
+
+  count, err = service.mongo.UsersCount(userId)
   if err != nil {
     return err
   }
