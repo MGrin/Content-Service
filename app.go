@@ -3,7 +3,9 @@ package ContentService
 import (
   "github.com/gorilla/mux"
 
+  "net"
   "net/http"
+  "net/url"
   "mime/multipart"
   "encoding/json"
   "errors"
@@ -38,7 +40,7 @@ func Create(originalsPath string, mongoURL string, mongoDBName string) (service 
   }
 
   service.r.HandleFunc("/{itemId}/{pictureType}", service.HandleUploadPicture).Methods("POST")
-  service.r.HandleFunc("/{itemId}/{pictureType}/{pictureName}", service.HandlDeletePicture).Methods("DELETE")
+  service.r.HandleFunc("/{itemId}/{pictureType}/{pictureName}", service.HandlDeletePicture).Methods("DELETE", "OPTIONS")
   service.r.HandleFunc("/{itemId}/{pictureType}/{pictureName}", service.HandlePictureConfirmation).Methods("PUT")
   service.r.HandleFunc("/{itemId}/{pictureName}", service.HandlePictureRequest).Methods("GET")
 
@@ -56,10 +58,13 @@ func (service *ContentService) Start(port int) error{
 }
 
 func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *http.Request) {
-  rw.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
-  rw.Header().Set("Access-Control-Allow-Credentials", "true")
-
   var err error
+
+  err = SetHeaders(rw, req)
+  if err != nil {
+    HandleError(500, err, rw)
+    return
+  }
 
   vars := mux.Vars(req)
   itemId := vars["itemId"]
@@ -121,10 +126,13 @@ func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *
 }
 
 func (service *ContentService) HandlDeletePicture(rw http.ResponseWriter, req *http.Request) {
-  rw.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
-  rw.Header().Set("Access-Control-Allow-Credentials", "true")
-
   var err error
+
+  err = SetHeaders(rw, req)
+  if err != nil {
+    HandleError(500, err, rw)
+    return
+  }
 
   vars := mux.Vars(req)
   itemId := vars["itemId"]
@@ -141,10 +149,13 @@ func (service *ContentService) HandlDeletePicture(rw http.ResponseWriter, req *h
 }
 
 func (service *ContentService) HandlePictureConfirmation(rw http.ResponseWriter, req *http.Request) {
-  rw.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
-  rw.Header().Set("Access-Control-Allow-Credentials", "true")
-
   var err error
+
+  err = SetHeaders(rw, req)
+  if err != nil {
+    HandleError(500, err, rw)
+    return
+  }
 
   vars := mux.Vars(req)
   itemId := vars["itemId"]
@@ -161,8 +172,11 @@ func (service *ContentService) HandlePictureConfirmation(rw http.ResponseWriter,
 }
 
 func (service *ContentService) HandlePictureRequest(rw http.ResponseWriter, req *http.Request) {
-  rw.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
-  rw.Header().Set("Access-Control-Allow-Credentials", "true")
+  err := SetHeaders(rw, req)
+  if err != nil {
+    HandleError(500, err, rw)
+    return
+  }
 
   vars := mux.Vars(req)
   itemId := vars["itemId"]
@@ -174,6 +188,31 @@ func (service *ContentService) HandlePictureRequest(rw http.ResponseWriter, req 
 func HandleError(code int, err error, rw http.ResponseWriter) {
   rw.WriteHeader(code)
   rw.Write([]byte(err.Error()))
+}
+
+func IsAllowedOrigin(origin string) bool {
+  u, err := url.Parse(origin)
+  if err != nil {
+    return false
+  }
+  host, _, _ := net.SplitHostPort(u.Host)
+  return origin == "" || host == "localhost" || host == "eventorio.me"
+}
+
+func SetHeaders(rw http.ResponseWriter, req *http.Request) error{
+  origin := req.Header.Get("Origin")
+
+  if !IsAllowedOrigin(origin) {
+    return errors.New("Origin is not allowed!")
+  }
+
+
+  rw.Header().Set("Access-Control-Allow-Origin", origin)
+  rw.Header().Set("Access-Control-Allow-Credentials", "true")
+  rw.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+  rw.Header().Set("Access-Control-Allow-Methods", "OPTIONS, POST, GET, PUT, DELETE")
+
+  return nil
 }
 
 func (service *ContentService) Authorize(req *http.Request) error {
