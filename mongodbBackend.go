@@ -48,22 +48,35 @@ func (mongo *MongoDBBackend) UsersCount(id string) (int, error) {
 	return count, err
 }
 
-func (mongo *MongoDBBackend) GetItemType(id string) (string, error) {
+func (mongo *MongoDBBackend) GetItemType(id string) (itemType string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			itemType = TEMP_TYPE
+			err = nil
+		}
+	}()
+
 	count, err := mongo.database.C(USERS_COLLECTION).FindId(bson.ObjectIdHex(id)).Count()
 	if err != nil {
-		return "", err
+		itemType = ""
+		return
 	}
 	if count != 0 {
-		return USER_TYPE, nil
+		itemType = USER_TYPE
+		err = nil
+		return
 	}
 
 	count, err = mongo.database.C(EVENTS_COLLECTION).FindId(bson.ObjectIdHex(id)).Count()
 	if err != nil {
-		return "", err
+		itemType = ""
+		return
 	}
 	if count != 0 {
-		return EVENT_TYPE, nil
+		itemType = EVENT_TYPE
+		err = nil
+		return
 	}
 
-	return TEMP_TYPE, nil
+	return
 }

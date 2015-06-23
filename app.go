@@ -63,7 +63,7 @@ func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *
   itemId := vars["itemId"]
   pictureType := vars["pictureType"]
 
-  if !service.Supports(pictureType) {
+  if !service.SupportsType(pictureType) {
     HandleError(404, errors.New("Not found"), rw)
     return
   }
@@ -81,7 +81,6 @@ func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *
     HandleError(500, err, rw)
   }
 
-  fmt.Println(itemType)
   if itemType == TEMP_TYPE{
     itemId = "temp"
   }

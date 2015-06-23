@@ -37,8 +37,12 @@ const (
   AVATAR_TYPE string = "avatar"
 )
 
-func (service *ContentService) Supports(pictureType string) bool{
-  return pictureType == HEADER_TYPE && pictureType == AVATAR_TYPE
+func (service *ContentService) SupportsType(pictureType string) bool{
+  return pictureType == HEADER_TYPE || pictureType == AVATAR_TYPE
+}
+
+func (service *ContentService) SupportsExtension(ext string) bool {
+  return ext == ".jpg" || ext == ".jpeg" || ext == ".png"
 }
 
 func (service *ContentService) RemovePicture(itemId, pictureType, pictureName string) error {
@@ -65,7 +69,7 @@ func (service *ContentService) UploadPicture(file multipart.File, fileHeader *mu
 
   ext := path.Ext(fileHeader.Filename)
 
-  if ext != "jpg" || ext != "jpeg" || ext != "png" {
+  if !service.SupportsExtension(ext) {
       return "", errors.New("Unsupported extension")
   }
 
