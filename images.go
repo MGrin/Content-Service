@@ -41,20 +41,23 @@ func (service *ContentService) Supports(pictureType string) bool{
   return pictureType == HEADER_TYPE && pictureType == AVATAR_TYPE
 }
 
-func (service *ContentService) RemovePicture(itemId, pictureType, pictureName string) err error {
+func (service *ContentService) RemovePicture(itemId, pictureType, pictureName string) error {
+  var err error
   filename := path.Join(ORIG_PATH, pictureType + pictureName)
   err = os.Remove(filename)
   return err
 }
 
-func (service *ContentService) ConfirmPicture(itemId, pictureType, pictureName string) err error {
-  tmpPath := Path.Join(ORIG_PATH, "temp")
-  tmpPath = Path.Join(tmpPath, pictureType + pictureName)
+func (service *ContentService) ConfirmPicture(itemId, pictureType, pictureName string) error {
+  var err error
+  tmpPath := path.Join(ORIG_PATH, "temp")
+  tmpPath = path.Join(tmpPath, pictureType + pictureName)
 
-  dstPath := Path.Join(ORIG_PATH, itemId)
-  dstPath = Path.Join(dstPath, pictureType + pictureName)
+  dstPath := path.Join(ORIG_PATH, itemId)
+  dstPath = path.Join(dstPath, pictureType + pictureName)
 
   err = os.Rename(tmpPath, dstPath)
+  return err
 }
 
 func (service *ContentService) UploadPicture(file multipart.File, fileHeader *multipart.FileHeader, itemId string, pictureType string) (name string, err error){
@@ -63,10 +66,10 @@ func (service *ContentService) UploadPicture(file multipart.File, fileHeader *mu
   ext := path.Ext(fileHeader.Filename)
 
   if ext != "jpg" || ext != "jpeg" || ext != "png" {
-      return nil, errors.New("Unsupported extension")
+      return "", errors.New("Unsupported extension")
   }
 
-  name = randSeq(15) + path.Ext(fileHeader.Filename)
+  name = randomstring(15) + path.Ext(fileHeader.Filename)
 
   outputFilePath := path.Join(ORIG_PATH, itemId)
   outputFilePath = path.Join(outputFilePath, pictureType + name)
@@ -88,7 +91,7 @@ func (service *ContentService) UploadPicture(file multipart.File, fileHeader *mu
   return name, nil
 }
 
-func (service *ContentService) GenerateThumbnails(itemId, type, name string) {
+func (service *ContentService) GenerateThumbnails(itemId string, itemType string, name string) {
 
-  return nil
+  return
 }

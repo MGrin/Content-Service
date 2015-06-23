@@ -75,7 +75,6 @@ func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *
   }
 
   var itemType string
-  var picturePath string
 
   itemType, err = service.mongo.GetItemType(itemId)
   if err != nil {
@@ -116,7 +115,7 @@ func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *
   rw.Write([]byte(filename))
 }
 
-func HandlDeletePicture(rw http.ResponseWriter, req *http.Request) {
+func (service *ContentService) HandlDeletePicture(rw http.ResponseWriter, req *http.Request) {
   var err error
 
   vars := mux.Vars(req)
@@ -133,7 +132,7 @@ func HandlDeletePicture(rw http.ResponseWriter, req *http.Request) {
   rw.WriteHeader(200)
 }
 
-func HandlePictureConfirmation(rw http.ResponseWriter, req *http.Request) {
+func (service *ContentService) HandlePictureConfirmation(rw http.ResponseWriter, req *http.Request) {
   var err error
 
   vars := mux.Vars(req)
@@ -167,7 +166,6 @@ func (service *ContentService) Authorize(req *http.Request) error {
   sessionId = strings.Split(sessionCookie.Value, ".")[0]
   sessionId = sessionId[4:len(sessionId)]
 
-  c := service.mongo.C("sessions")
   var sessionStruct *SessionModel
 
   sessionStruct, err = service.mongo.FindSessionById(sessionId)
