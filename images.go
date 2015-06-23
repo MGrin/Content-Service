@@ -47,19 +47,22 @@ func (service *ContentService) SupportsExtension(ext string) bool {
 
 func (service *ContentService) RemovePicture(itemId, pictureType, pictureName string) error {
   var err error
-  filename := path.Join(ORIG_PATH, pictureType + pictureName)
+  filename := path.Join(ORIG_PATH, itemId, pictureType + pictureName)
   err = os.Remove(filename)
   return err
 }
 
 func (service *ContentService) ConfirmPicture(itemId, pictureType, pictureName string) error {
   var err error
-  tmpPath := path.Join(ORIG_PATH, "temp")
-  tmpPath = path.Join(tmpPath, pictureType + pictureName)
 
-  dstPath := path.Join(ORIG_PATH, itemId)
-  dstPath = path.Join(dstPath, pictureType + pictureName)
+  err = os.MkdirAll(path.Join(ORIG_PATH, itemId), 0777)
+  if err != nil {
+    return err
+  }
 
+  tmpPath := path.Join(ORIG_PATH, "temp", pictureType + pictureName)
+  dstPath := path.Join(ORIG_PATH, itemId, pictureType + pictureName)
+  
   err = os.Rename(tmpPath, dstPath)
   return err
 }
@@ -75,8 +78,7 @@ func (service *ContentService) UploadPicture(file multipart.File, fileHeader *mu
 
   name = randomstring(15) + path.Ext(fileHeader.Filename)
 
-  outputFilePath := path.Join(ORIG_PATH, itemId)
-  outputFilePath = path.Join(outputFilePath, pictureType + name)
+  outputFilePath := path.Join(ORIG_PATH, itemId, pictureType + name)
 
   outputFile, err = os.Create(outputFilePath)
   defer outputFile.Close()

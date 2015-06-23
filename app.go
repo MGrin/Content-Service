@@ -40,8 +40,7 @@ func Create(originalsPath string, mongoURL string, mongoDBName string) (service 
   service.r.HandleFunc("/{itemId}/{pictureType}", service.HandleUploadPicture).Methods("POST")
   service.r.HandleFunc("/{itemId}/{pictureType}/{pictureName}", service.HandlDeletePicture).Methods("DELETE")
   service.r.HandleFunc("/{itemId}/{pictureType}/{pictureName}", service.HandlePictureConfirmation).Methods("PUT")
-
-  service.r.PathPrefix("/").Handler(http.FileServer(http.Dir(ORIG_PATH))).Methods("GET")
+  service.r.HandleFunc("/{itemId}/{pictureName}", service.HandlePictureRequest).Methods("GET")
 
   service.mongo, err = CreateMongoBackend(mongoURL, mongoDBName)
 
@@ -57,6 +56,9 @@ func (service *ContentService) Start(port int) error{
 }
 
 func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *http.Request) {
+  rw.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+  rw.Header().Set("Access-Control-Allow-Credentials", "true")
+
   var err error
 
   vars := mux.Vars(req)
@@ -97,11 +99,15 @@ func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *
   )
 
   file, fileHeader, err = req.FormFile("picture")
-  defer file.Close()
   if err != nil {
     HandleError(500, err, rw)
     return
   }
+  if file == nil {
+    HandleError(500, errors.New("No picture provided"), rw)
+    return
+  }
+  defer file.Close()
 
   var filename string
   filename, err = service.UploadPicture(file, fileHeader, itemId, pictureType)
@@ -115,6 +121,9 @@ func (service *ContentService) HandleUploadPicture(rw http.ResponseWriter, req *
 }
 
 func (service *ContentService) HandlDeletePicture(rw http.ResponseWriter, req *http.Request) {
+  rw.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+  rw.Header().Set("Access-Control-Allow-Credentials", "true")
+
   var err error
 
   vars := mux.Vars(req)
@@ -132,6 +141,9 @@ func (service *ContentService) HandlDeletePicture(rw http.ResponseWriter, req *h
 }
 
 func (service *ContentService) HandlePictureConfirmation(rw http.ResponseWriter, req *http.Request) {
+  rw.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+  rw.Header().Set("Access-Control-Allow-Credentials", "true")
+
   var err error
 
   vars := mux.Vars(req)
@@ -146,6 +158,17 @@ func (service *ContentService) HandlePictureConfirmation(rw http.ResponseWriter,
   }
 
   rw.WriteHeader(200)
+}
+
+func (service *ContentService) HandlePictureRequest(rw http.ResponseWriter, req *http.Request) {
+  rw.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+  rw.Header().Set("Access-Control-Allow-Credentials", "true")
+
+  vars := mux.Vars(req)
+  itemId := vars["itemId"]
+  pictureName := vars["pictureName"]
+
+  http.ServeFile(rw, req, path.Join(ORIG_PATH, itemId, pictureName))
 }
 
 func HandleError(code int, err error, rw http.ResponseWriter) {
