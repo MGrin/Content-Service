@@ -195,17 +195,17 @@ func HandleError(code int, err error, rw http.ResponseWriter) {
   rw.Write([]byte(err.Error()))
 }
 
-func IsAllowedOrigin(origin string) bool {
-  u, err := url.Parse(origin)
-  if err != nil {
-    return false
-  }
-  host, _, _ := net.SplitHostPort(u.Host)
-  return origin == "" || host == "localhost" || host == "eventorio.me"
-}
+// func IsAllowedOrigin(origin string) bool {
+//   u, err := url.Parse(origin)
+//   if err != nil {
+//     return false
+//   }
+//   host, _, _ := net.SplitHostPort(u.Host)
+//   return origin == "" || host == "localhost" || host == "eventorio.me"
+// }
 
 func SetHeaders(rw http.ResponseWriter, req *http.Request) error{
-  origin := req.Header.Get("Origin")
+  // origin := req.Header.Get("Origin")
 
   // if !IsAllowedOrigin(origin) {
   //   return errors.New("Origin is not allowed!")
