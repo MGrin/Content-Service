@@ -246,7 +246,7 @@ func (service *ContentService) Authorize(req *http.Request) error {
 
   sessionUser := session["passport"]["user"]
   if sessionUser == nil {
-    return errors.New('Not authorized')
+    return errors.New("Not authorized")
   }
   userId := sessionUser.(string)
   var count int
