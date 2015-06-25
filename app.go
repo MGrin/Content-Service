@@ -49,6 +49,7 @@ func Create(originalsPath string, mongoURL string, mongoDBName string) (service 
 
 func (service *ContentService) Start(port int) error{
   http.Handle("/", service.r)
+  fmt.Println("Without access-control-origin")
   fmt.Printf("Pictures Server running on port %d\n", port)
   http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 
@@ -193,26 +194,10 @@ func HandleError(code int, err error, rw http.ResponseWriter) {
   rw.Write([]byte(err.Error()))
 }
 
-// func IsAllowedOrigin(origin string) bool {
-//   u, err := url.Parse(origin)
-//   if err != nil {
-//     return false
-//   }
-//   host, _, _ := net.SplitHostPort(u.Host)
-//   return origin == "" || host == "localhost" || host == "eventorio.me"
-// }
-
 func SetHeaders(rw http.ResponseWriter, req *http.Request) error{
-  // origin := req.Header.Get("Origin")
-
-  // if !IsAllowedOrigin(origin) {
-  //   return errors.New("Origin is not allowed!")
-  // }
-
-
-  rw.Header().Set("Access-Control-Allow-Origin", "*")
+  rw.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
   rw.Header().Set("Access-Control-Allow-Credentials", "true")
-  rw.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+  rw.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token")
   rw.Header().Set("Access-Control-Allow-Methods", "OPTIONS, POST, GET, PUT, DELETE")
 
   return nil
@@ -220,18 +205,16 @@ func SetHeaders(rw http.ResponseWriter, req *http.Request) error{
 
 func (service *ContentService) Authorize(req *http.Request) error {
   var err error
-  var sessionCookie *http.Cookie
   var sessionId string
 
-  sessionCookie, err = req.Cookie("connect.sid")
-  if err != nil {
-    return err
+  sessionId = req.FormValue("connect.sid")
+  if sessionId == "" {
+    return errors.New("Not authorized")
   }
-  sessionId = strings.Split(sessionCookie.Value, ".")[0]
-  sessionId = sessionId[4:len(sessionId)]
+  sessionId = strings.Split(sessionId, ".")[0]
+  sessionId = sessionId[2:len(sessionId)]
 
   var sessionStruct *SessionModel
-  fmt.Println(sessionId)
   sessionStruct, err = service.mongo.FindSessionById(sessionId)
   if err != nil {
     return err
