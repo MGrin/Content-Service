@@ -200,7 +200,7 @@ func IsAllowedOrigin(origin string) bool {
   if err != nil {
     return false
   }
-  host, _:= net.SplitHostPort(u.Host)
+  host, _, _ := net.SplitHostPort(u.Host)
   return origin == "" || host == "localhost" || host == "eventorio.me"
 }
 
