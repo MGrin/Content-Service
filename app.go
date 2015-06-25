@@ -134,6 +134,10 @@ func (service *ContentService) HandlDeletePicture(rw http.ResponseWriter, req *h
     return
   }
 
+  if req.Method == "OPTIONS" {
+    rw.WriteHeader(200)
+    return
+  }
   vars := mux.Vars(req)
   itemId := vars["itemId"]
   pictureType := vars["pictureType"]
