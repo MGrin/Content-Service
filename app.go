@@ -207,12 +207,12 @@ func IsAllowedOrigin(origin string) bool {
 func SetHeaders(rw http.ResponseWriter, req *http.Request) error{
   origin := req.Header.Get("Origin")
 
-  if !IsAllowedOrigin(origin) {
-    return errors.New("Origin is not allowed!")
-  }
+  // if !IsAllowedOrigin(origin) {
+  //   return errors.New("Origin is not allowed!")
+  // }
 
 
-  rw.Header().Set("Access-Control-Allow-Origin", origin)
+  rw.Header().Set("Access-Control-Allow-Origin", "*")
   rw.Header().Set("Access-Control-Allow-Credentials", "true")
   rw.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
   rw.Header().Set("Access-Control-Allow-Methods", "OPTIONS, POST, GET, PUT, DELETE")
