@@ -201,7 +201,7 @@ func IsAllowedOrigin(origin string) bool {
     return false
   }
   host, _, _ := net.SplitHostPort(u.Host)
-  return origin == "" || host == "localhost" || host == "eventorio.me"
+  return origin == nil || origin == "" || host == "localhost" || host == "eventorio.me"
 }
 
 func SetHeaders(rw http.ResponseWriter, req *http.Request) error{
