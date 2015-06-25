@@ -186,6 +186,7 @@ func (service *ContentService) HandlePictureRequest(rw http.ResponseWriter, req 
 }
 
 func HandleError(code int, err error, rw http.ResponseWriter) {
+  fmt.Println(err.Error());
   rw.WriteHeader(code)
   rw.Write([]byte(err.Error()))
 }
