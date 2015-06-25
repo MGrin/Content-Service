@@ -231,7 +231,7 @@ func (service *ContentService) Authorize(req *http.Request) error {
   sessionId = sessionId[4:len(sessionId)]
 
   var sessionStruct *SessionModel
-
+  fmt.Println(sessionId)
   sessionStruct, err = service.mongo.FindSessionById(sessionId)
   if err != nil {
     return err
@@ -251,7 +251,6 @@ func (service *ContentService) Authorize(req *http.Request) error {
   userId := sessionUser.(string)
   var count int
 
-  fmt.Println(userId)
   count, err = service.mongo.UsersCount(userId)
   if err != nil {
     return err
