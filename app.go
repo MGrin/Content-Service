@@ -200,8 +200,8 @@ func IsAllowedOrigin(origin string) bool {
   if err != nil {
     return false
   }
-  host, _, _ := net.SplitHostPort(u.Host)
-  return origin == nil || origin == "" || host == "localhost" || host == "eventorio.me"
+  host, _:= net.SplitHostPort(u.Host)
+  return origin == "" || host == "localhost" || host == "eventorio.me"
 }
 
 func SetHeaders(rw http.ResponseWriter, req *http.Request) error{
