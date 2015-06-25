@@ -244,7 +244,11 @@ func (service *ContentService) Authorize(req *http.Request) error {
     return err
   }
 
-  userId := session["passport"]["user"].(string)
+  sessionUser := session["passport"]["user"]
+  if sessionUser == nil {
+    return errors.New('Not authorized')
+  }
+  userId := sessionUser.(string)
   var count int
 
   count, err = service.mongo.UsersCount(userId)
