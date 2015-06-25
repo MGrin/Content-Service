@@ -251,6 +251,7 @@ func (service *ContentService) Authorize(req *http.Request) error {
   userId := sessionUser.(string)
   var count int
 
+  fmt.Println(userId)
   count, err = service.mongo.UsersCount(userId)
   if err != nil {
     return err
