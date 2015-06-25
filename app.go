@@ -3,9 +3,7 @@ package ContentService
 import (
   "github.com/gorilla/mux"
 
-  "net"
   "net/http"
-  "net/url"
   "mime/multipart"
   "encoding/json"
   "errors"
