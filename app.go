@@ -49,7 +49,6 @@ func Create(originalsPath string, mongoURL string, mongoDBName string) (service 
 
 func (service *ContentService) Start(port int) error{
   http.Handle("/", service.r)
-  fmt.Println("Without access-control-origin")
   fmt.Printf("Pictures Server running on port %d\n", port)
   http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 
