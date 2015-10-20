@@ -4,7 +4,7 @@ Go server to deal with user images.
 Works with MongoDB backend and users logged in you server using mongo-sessions (you should have a collection called sessions in order to check if user is logged in or not)
 
 ### Example of usage:
-```
+```go
 package main
 
 import (
